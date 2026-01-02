@@ -1,0 +1,86 @@
+#include <windows.h>
+#include <string>
+
+#define ID_INPUT 1
+#define ID_BUTTON 2
+#define ID_OUTPUT 3
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    static HWND hInput, hButton, hOutput;
+
+    switch (uMsg) {
+    case WM_CREATE:
+        hInput = CreateWindow(
+            "EDIT", "",
+            WS_CHILD | WS_VISIBLE | WS_BORDER,
+            10, 10, 260, 25,
+            hwnd, (HMENU)ID_INPUT, NULL, NULL
+        );
+
+        hButton = CreateWindow(
+            "BUTTON", "Send",
+            WS_CHILD | WS_VISIBLE,
+            10, 45, 80, 25,
+            hwnd, (HMENU)ID_BUTTON, NULL, NULL
+        );
+
+        hOutput = CreateWindow(
+            "STATIC", "Assistant ready.",
+            WS_CHILD | WS_VISIBLE,
+            10, 80, 260, 25,
+            hwnd, (HMENU)ID_OUTPUT, NULL, NULL
+        );
+        break;
+
+    case WM_COMMAND:
+        if (LOWORD(wParam) == ID_BUTTON) {
+            char buffer[256];
+            GetWindowText(hInput, buffer, 256);
+
+            std::string input = buffer;
+            std::string response = "I don't understand.";
+
+            if (input == "halo") response = "Halo juga.";
+            else if (input == "siapa kamu") response = "Aku asisten desktop.";
+            else if (input == "bye") response = "Sampai jumpa.";
+
+            SetWindowText(hOutput, response.c_str());
+        }
+        break;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+    const char CLASS_NAME[] = "DesktopAssistantClass";
+
+    WNDCLASS wc = {};
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = CLASS_NAME;
+
+    RegisterClass(&wc);
+
+    HWND hwnd = CreateWindowEx(
+        WS_EX_TOPMOST,
+        CLASS_NAME,
+        "Desktop Assistant",
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU,
+        100, 100, 300, 160,
+        NULL, NULL, hInstance, NULL
+    );
+
+    ShowWindow(hwnd, nCmdShow);
+
+    MSG msg = {};
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return 0;
+}
